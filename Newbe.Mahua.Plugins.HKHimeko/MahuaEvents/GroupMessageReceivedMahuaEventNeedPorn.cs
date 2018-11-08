@@ -200,7 +200,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                     popular = false;
                     _mahuaApi.SendGroupMessage(context.FromGroup)
                         .At(context.FromQq)
-                        .Text("あんたバカ？今日色图已经全部发过一遍了！你们这群射精机器！")
+                        .Text(" あんたバカ？今日色图已经全部发过一遍了！你们这群射精机器！")
                         .Done();
                     _mahuaApi.SendGroupMessage(context.FromGroup)
                         .Text("二阶段准备！")
@@ -210,7 +210,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                 {
                     _mahuaApi.SendGroupMessage(context.FromGroup)
                         .At(context.FromQq)
-                        .Text("噫！怀旧色图也已经发了这么多了！你们这群变态还不停下吗！")
+                        .Text(" 噫！怀旧色图也已经发了这么多了！你们这群变态还不停下吗！")
                         .Done();
                 }
                 _mahuaApi.SendGroupMessage(context.FromGroup)
@@ -219,7 +219,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                 Update(context, popular);
                 _mahuaApi.SendGroupMessage(context.FromGroup)
                     .At(context.FromQq)
-                    .Text("哼！人家才，才不是为了你才特意去找的啦！")
+                    .Text(" 哼！人家才，才不是为了你才特意去找的啦！")
                     .Done();
 
                 // 每次更新以后都需要重新生成随机数组pornArray，因为长度jArr.Count可能不一样。
@@ -259,7 +259,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                 {
                     _mahuaApi.SendGroupMessage(context.FromGroup)
                         .At(context.FromQq)
-                        .Text($"讨厌，你今天已经超过限额啦，明天再来试试吧！")
+                        .Text($" 讨厌，你今天已经超过限额啦，明天再来试试吧！")
                         .Done();
                     GetStatus(context);
                     return;
@@ -294,9 +294,11 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
             // 我怀疑因为之前只发一张图片和对应地址导致被腾讯认为是广告机所以总是被屏蔽群消息发送不出去，尝试添加Score和Tags信息来解决这个问题。
             string msg = $"[IR:pic={jArr[pornArray[pornIndex]]["sample_url"]}]\r\n" +
                 $"[IR:at={context.FromQq}]\r\n" +
+                $"Id: {jArr[pornArray[pornIndex]]["id"]}\r\n" +
                 $"Score: {jArr[pornArray[pornIndex]]["score"]}\r\n" +
-                $"Tags: {jArr[pornArray[pornIndex]]["tags"]}\r\n" +
-                $"https://yande.re/post/show/{jArr[pornArray[pornIndex]]["id"]}";
+                $"Tags: {jArr[pornArray[pornIndex]]["tags"]}";
+                // 我现在进一步怀疑是因为yande.re这个网站被腾讯认为不安全所以总是被屏蔽群消息发送不出去，yande.re现在经常被墙大家也很少会去点开，因此尝试去掉网址直接使用id来解决这个问题。
+                //$"https://yande.re/post/show/{jArr[pornArray[pornIndex]]["id"]}";
             _mahuaApi.SendGroupMessage(context.FromGroup, msg);
 
             // 一个小彩蛋：Uploader是群主，触发概率大概是4%。
@@ -307,7 +309,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                     .Text("娘子呀，跟牛魔王出来看上帝。")
                     .Newline()
                     .At(context.FromQq)
-                    .Text($"恭喜！由于触发了彩蛋，你一整天都会获得港姬子的Super AI Buff（+100%限额，-90%冷却缩减）哦！")
+                    .Text($" 恭喜！由于触发了彩蛋，你一整天都会获得港姬子的Super AI Buff（+100%限额，-90%冷却缩减）哦！")
                     .Done();
             }
 
@@ -329,7 +331,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
             {
                 _mahuaApi.SendGroupMessage(context.FromGroup)
                     .At(context.FromQq)
-                    .Text($"你刚刚才要过色图哦，等{(status[context.FromQq].buff ? 2 : 20) - DateTime.Now.Subtract(status[context.FromQq].dateTime).Minutes}分钟再试试看吧！")
+                    .Text($" 你刚刚才要过色图哦，等{(status[context.FromQq].buff ? 2 : 20) - DateTime.Now.Subtract(status[context.FromQq].dateTime).Minutes}分钟再试试看吧！")
                     .Newline()
                     .Text($"你今天已经要过{status[context.FromQq].used}张色图了，当前得分是{status[context.FromQq].averageScore}。")
                     .Done();
@@ -338,7 +340,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
             {
                 _mahuaApi.SendGroupMessage(context.FromGroup)
                     .At(context.FromQq)
-                    .Text("你今天还没有要过色图呢，快去要一份试试看吧！")
+                    .Text(" 你今天还没有要过色图呢，快去要一份试试看吧！")
                     .Done();
             }
         }
@@ -351,7 +353,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
         {
             _mahuaApi.SendGroupMessage(context.FromGroup)
                 .At(context.FromQq)
-                .Text($"贵群当前最高得分为{firstAverageScore}，请继续努力哦！")
+                .Text($" 贵群当前最高得分为{firstAverageScore}，请继续努力哦！")
                 .Done();
         }
 
@@ -366,7 +368,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                 {
                     _mahuaApi.SendGroupMessage(context.FromGroup)
                         .At(context.FromQq)
-                        .Text("老娘都说了还没更新完！花Q！花Q花Q！花～Q！")
+                        .Text(" 老娘都说了还没更新完！花Q！花Q花Q！花～Q！")
                         .Done();
                     Thread.Sleep(10000);
                 }
