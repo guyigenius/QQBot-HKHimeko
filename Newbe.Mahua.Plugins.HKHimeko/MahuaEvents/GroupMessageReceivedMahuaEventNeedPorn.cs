@@ -293,10 +293,12 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
             // 只能自己手动拼接字符串构造，注意因为Api_UpLoadPic上传的图片尺寸应小于4MB，否则会上传失败返回空，所以这里采用sample_url而不是jpeg_url。
             // 我怀疑因为之前只发一张图片和对应地址导致被腾讯认为是广告机所以总是被屏蔽群消息发送不出去，尝试添加Score和Tags信息来解决这个问题。
             string msg = $"[IR:pic={jArr[pornArray[pornIndex]]["sample_url"]}]\r\n" +
+                // 尝试添加表情和Emoji。
                 $"[IR:at={context.FromQq}]\r\n" +
-                $"Id: {jArr[pornArray[pornIndex]]["id"]}\r\n" +
-                $"Score: {jArr[pornArray[pornIndex]]["score"]}\r\n" +
-                $"Tags: {jArr[pornArray[pornIndex]]["tags"]}";
+                $"Id: [emoji=F09F9189]{jArr[pornArray[pornIndex]]["id"]}[emoji=F09F9188]\r\n" +
+                $"Score: [Face175.gif]{jArr[pornArray[pornIndex]]["score"]}[Face175.gif]";
+                // 太长的Tags也可能会导致被屏蔽。
+                //$"Tags: {jArr[pornArray[pornIndex]]["tags"]}";
                 // 我现在进一步怀疑是因为yande.re这个网站被腾讯认为不安全所以总是被屏蔽群消息发送不出去，yande.re现在经常被墙大家也很少会去点开，因此尝试去掉网址直接使用id来解决这个问题。
                 //$"https://yande.re/post/show/{jArr[pornArray[pornIndex]]["id"]}";
             _mahuaApi.SendGroupMessage(context.FromGroup, msg);
