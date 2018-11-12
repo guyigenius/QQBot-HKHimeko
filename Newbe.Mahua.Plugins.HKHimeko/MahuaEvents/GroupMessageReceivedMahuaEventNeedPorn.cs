@@ -298,6 +298,11 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
             {
                 rarity = "N";
             }
+            // 本体必然是UR。
+            if (jArr[pornArray[pornIndex]]["tags"].ToString().Contains("kizuna_ai"))
+            {
+                rarity = "UR";
+            }
 
             // 暂时框架对于发图功能支持有问题，会直接发送图片地址而不是图片。
             //string msg = $"[IR:pic={new DirectoryInfo("./AppData/Images/").FullName}{pornArray[pornIndex]}.jpg]\r\nhttps://yande.re/post/show/{jArr[pornArray[pornIndex]]["id"]}";
