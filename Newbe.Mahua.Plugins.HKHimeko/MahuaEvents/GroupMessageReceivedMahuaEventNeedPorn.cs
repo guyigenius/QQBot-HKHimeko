@@ -6,6 +6,7 @@ using System;
 //using System.IO;
 using System.Net;
 using System.Text;
+using System.Linq;
 using System.Threading;
 using System.Collections.Generic;
 
@@ -27,7 +28,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
             public int used; /*已经使用的限额*/
             public int totalScore; /*当前抽到的色图的总分，即使怀旧色图平均分必然比今日色图高不少，我还是没有给今日色图加权，因为我觉得现在这么设置的话不太可能进入二阶段了，如果能够进入那就当做奖励吧，也不考虑惩罚分了。*/
             public double averageScore; /*当前抽到的色图的平均分*/
-            public bool buff; /*是否获得了港姬子的Super AI Buff*/
+            public bool buff; /*是否获得了港姬子的Super AI Buff（+100%限额，-90%冷却缩减。）*/
         };
 
         private static JArray jArr = new JArray(); /*query返回的JSON*/
@@ -38,13 +39,10 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
         private static bool updateLock = false; /*更新的锁*/
         private static HashSet<int> record = new HashSet<int>(); /*记录发送过的图片id的哈希集*/
         private static Dictionary<string, Status> status = new Dictionary<string, Status>();  /*不加限额根本扛不住*/
-        // 每人每日限额12张，CD每30分钟2张。Super AI Buff：+100%限额，-90%冷却缩减。
-        private readonly int quota = 12;
-        private readonly int cooldown = 30;
+        private readonly int quota = 12; /*每人每日限额12张*/
+        private readonly int cooldown = 30; /*CD每30分钟2张*/
         private readonly int quotaInCooldown = 2;
-        private static string firstQq = "";
-        //private static double[] rankingAverageScore = new double[3] { 0.0, 0.0, 0.0 };
-        private static double firstAverageScore = 0.0;
+        private static Dictionary<string, double> ranking = new Dictionary<string, double>(); /*保存QQ号和对应平均分用于排名*/
 
         public GroupMessageReceivedMahuaEventNeedPorn(
             IMahuaApi mahuaApi)
@@ -157,13 +155,13 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
             {
                 popular = true;
                 status = new Dictionary<string, Status>();
-                if (firstQq != "")
+                if (ranking.Count != 0)
                 {
                     _mahuaApi.SendGroupMessage(context.FromGroup)
-                    .At(firstQq)
-                    .Text($" 恭喜！由于你昨天得分第一，你今天一整天都会获得港姬子的Super AI Buff（+100%限额，-90%冷却缩减）哦！")
-                    .Done();
-                    status[firstQq] = new Status
+                        .At(ranking.FirstOrDefault(kvp => kvp.Value == ranking.Values.Max()).Key)
+                        .Text($" 恭喜！由于你昨天得分第一，你今天一整天都会获得港姬子的Super AI Buff（+100%限额，-90%冷却缩减）哦！")
+                        .Done();
+                    status[ranking.FirstOrDefault(kvp => kvp.Value == ranking.Values.Max()).Key] = new Status
                     {
                         dateTimeQueue = new Queue<DateTime>(),
                         used = 0,
@@ -172,8 +170,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                         buff = true
                     };
                 }
-                firstQq = "";
-                firstAverageScore = 0.0;
+                ranking = new Dictionary<string, double>();
                 _mahuaApi.SendGroupMessage(context.FromGroup)
                     .Text($"今日色图开始更新，更新完毕之前管住鸡儿请勿反复请求。")
                     .Done();
@@ -250,11 +247,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                         status[context.FromQq].used++;
                         status[context.FromQq].totalScore += jArr[pornArray[pornIndex]]["score"].ToObject<int>();
                         status[context.FromQq].averageScore = Math.Round((double)status[context.FromQq].totalScore / status[context.FromQq].used, 2);
-                        if (status[context.FromQq].averageScore > firstAverageScore)
-                        {
-                            firstAverageScore = status[context.FromQq].averageScore;
-                            firstQq = context.FromQq;
-                        }
+                        ranking[context.FromQq] = status[context.FromQq].averageScore;
                         if (status[context.FromQq].dateTimeQueue.Count > quotaInCooldown)
                         {
                             status[context.FromQq].dateTimeQueue.Dequeue();
@@ -281,11 +274,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                     averageScore = Math.Round(jArr[pornArray[pornIndex]]["score"].ToObject<double>(), 2),
                     buff = false
                 };
-                if (status[context.FromQq].averageScore > firstAverageScore)
-                {
-                    firstAverageScore = status[context.FromQq].averageScore;
-                    firstQq = context.FromQq;
-                }
+                ranking[context.FromQq] = status[context.FromQq].averageScore;
             }
 
             string rarity;
@@ -369,20 +358,31 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                         status[context.FromQq].dateTimeQueue.Count >= quotaInCooldown)
                 {
                     _mahuaApi.SendGroupMessage(context.FromGroup)
-                    .At(context.FromQq)
-                    .Text($" 你刚刚才要过色图哦，等{(status[context.FromQq].buff ? 0.1 * cooldown : cooldown) - DateTime.Now.Subtract(status[context.FromQq].dateTimeQueue.Peek()).Minutes}分钟再试试看吧！")
-                    .Newline()
-                    .Text($"你今天已经要过{status[context.FromQq].used}张色图了，当前平均分是{status[context.FromQq].averageScore}。")
-                    .Done();
+                        .At(context.FromQq)
+                        .Text($" 你刚刚才要过色图哦，等{(status[context.FromQq].buff ? 0.1 * cooldown : cooldown) - DateTime.Now.Subtract(status[context.FromQq].dateTimeQueue.Peek()).Minutes}分钟再试试看吧！")
+                        .Newline()
+                        .Text($"你今天已经要过{status[context.FromQq].used}张色图了，当前平均分是{status[context.FromQq].averageScore}。")
+                        .Done();
                 }
                 else
                 {
-                    _mahuaApi.SendGroupMessage(context.FromGroup)
-                    .At(context.FromQq)
-                    .Text($" 你现在就可以要色图哦！")
-                    .Newline()
-                    .Text($"你今天已经要过{status[context.FromQq].used}张色图了，当前平均分是{status[context.FromQq].averageScore}。")
-                    .Done();
+                    // 昨天得分最高的人可能还没有要过色图，但是因为Super AI Buff初始化的原因所以已经有这个Key了。
+                    if (status[context.FromQq].used == 0)
+                    {
+                        _mahuaApi.SendGroupMessage(context.FromGroup)
+                            .At(context.FromQq)
+                            .Text(" 你今天还没有要过色图呢，快去要一份试试看吧！")
+                            .Done();
+                    }
+                    else
+                    {
+                        _mahuaApi.SendGroupMessage(context.FromGroup)
+                            .At(context.FromQq)
+                            .Text($" 你现在就可以要色图哦！")
+                            .Newline()
+                            .Text($"你今天已经要过{status[context.FromQq].used}张色图了，当前平均分是{status[context.FromQq].averageScore}。")
+                            .Done();
+                    }
                 }
             }
             else
@@ -402,7 +402,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
         {
             _mahuaApi.SendGroupMessage(context.FromGroup)
                 .At(context.FromQq)
-                .Text($" 贵群当前最高分为{firstAverageScore}，请继续努力哦！")
+                .Text($" 贵群当前最高分为{ranking.FirstOrDefault(kvp => kvp.Value == ranking.Values.Max()).Value}，请继续努力哦！")
                 .Done();
         }
 
