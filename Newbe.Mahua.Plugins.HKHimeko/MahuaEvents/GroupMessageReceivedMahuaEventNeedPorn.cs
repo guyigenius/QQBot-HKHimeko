@@ -256,10 +256,6 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                 }
                 else /*Triskaidekaphobia*/
                 {
-                    _mahuaApi.SendGroupMessage(context.FromGroup)
-                        .At(context.FromQq)
-                        .Text($" 讨厌，你今天已经超过限额啦，明天再来试试吧！")
-                        .Done();
                     GetStatus(context);
                     return;
                 }
@@ -379,11 +375,20 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                             .Text(" 你今天还没有要过色图呢，快去要一份试试看吧！")
                             .Done();
                     }
-                    else
+                    else if (status[context.FromQq].used < (status[context.FromQq].buff ? 2 * quota : quota))
                     {
                         _mahuaApi.SendGroupMessage(context.FromGroup)
                             .At(context.FromQq)
                             .Text($" 你现在就可以要色图哦！")
+                            .Newline()
+                            .Text($"你今天已经要过{status[context.FromQq].used}张色图了，当前平均分是{status[context.FromQq].averageScore}。")
+                            .Done();
+                    }
+                    else
+                    {
+                        _mahuaApi.SendGroupMessage(context.FromGroup)
+                            .At(context.FromQq)
+                            .Text($" 讨厌，你今天已经超过限额啦，明天再来试试吧！")
                             .Newline()
                             .Text($"你今天已经要过{status[context.FromQq].used}张色图了，当前平均分是{status[context.FromQq].averageScore}。")
                             .Done();
