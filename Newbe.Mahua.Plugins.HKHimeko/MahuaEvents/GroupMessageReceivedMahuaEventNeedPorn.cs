@@ -163,7 +163,7 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                         .Done();
                     status[ranking.FirstOrDefault(kvp => kvp.Value == ranking.Values.Max()).Key] = new Status
                     {
-                        dateTimeQueue = new Queue<DateTime>(),
+                        dateTimeQueue = new Queue<DateTime>(new DateTime[] { new DateTime() }),
                         used = 0,
                         totalScore = 0,
                         averageScore = 0.0,
