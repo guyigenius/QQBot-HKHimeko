@@ -273,24 +273,25 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                 ranking[context.FromQq] = status[context.FromQq].averageScore;
             }
 
-            string rarity;
-            if (jArr[pornArray[pornIndex]]["score"].ToObject<int>() > 100)
+            // 热图和怀旧有不一样的稀有度评判标准，N:R:SR:SSR=4:3:2:1，UR不作考虑。
+            string rarity = "N";
+            if (jArr[pornArray[pornIndex]]["score"].ToObject<int>() > (popular ? 80 : 105))
             {
                 rarity = "UR";
             }
-            else if (jArr[pornArray[pornIndex]]["score"].ToObject<int>() > 75)
+            else if (jArr[pornArray[pornIndex]]["score"].ToObject<int>() > (popular ? 74 : 97))
             {
                 rarity = "SSR";
             }
-            else if (jArr[pornArray[pornIndex]]["score"].ToObject<int>() > 50)
+            else if (jArr[pornArray[pornIndex]]["score"].ToObject<int>() > (popular ? 62 : 81))
             {
                 rarity = "SR";
             }
-            else if (jArr[pornArray[pornIndex]]["score"].ToObject<int>() > 25)
+            else if (jArr[pornArray[pornIndex]]["score"].ToObject<int>() > (popular ? 44 : 57))
             {
                 rarity = "R";
             }
-            else
+            else if(jArr[pornArray[pornIndex]]["score"].ToObject<int>() >= (popular ? 20 : 25))
             {
                 rarity = "N";
             }
@@ -319,6 +320,16 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
                 $"Score: {jArr[pornArray[pornIndex]]["score"]}\r\n" +
                 $"Rarity: [Face175.gif]{rarity}[Face175.gif]";
             _mahuaApi.SendGroupMessage(context.FromGroup, msg);
+
+            // 偶尔求一下Star不过分吧！
+            if (pornIndex % 7 == 0)
+            {
+                _mahuaApi.SendGroupMessage(context.FromGroup)
+                    .Text("港姬子开源地址：https://github.com/guyigenius/QQBot-HKHimeko。")
+                    .Newline()
+                    .Text("一定要Star一下哦！")
+                    .Done();
+            }
 
             if (rarity == "UR")
             {
@@ -420,26 +431,29 @@ namespace Newbe.Mahua.Plugins.HKHimeko.MahuaEvents
         {
             // todo 填充处理逻辑
             //throw new NotImplementedException();
-            if (context.Message.Equals("我要色图"))
+            if (context.Message.StartsWith("我要色图"))
             {
-                // 如果其他线程正在更新，先睡上10秒。
-                if (updateLock)
+                if (context.Message.Equals("我要色图 状态"))
                 {
-                    _mahuaApi.SendGroupMessage(context.FromGroup)
-                        .At(context.FromQq)
-                        .Text(" 老娘都说了还没更新完！花Q！花Q花Q！花～Q！")
-                        .Done();
-                    Thread.Sleep(10000);
+                    GetStatus(context);
                 }
-                NeedPorn(context);
-            }
-            if (context.Message.Equals("我要色图 状态"))
-            {
-                GetStatus(context);
-            }
-            if (context.Message.Equals("我要色图 排名"))
-            {
-                GetRanking(context);
+                else if (context.Message.Equals("我要色图 排名"))
+                {
+                    GetRanking(context);
+                }
+                else if (context.Message.Equals("我要色图") || context.Message.StartsWith("我要色图 "))
+                {
+                    // 如果其他线程正在更新，先睡上10秒。
+                    if (updateLock)
+                    {
+                        _mahuaApi.SendGroupMessage(context.FromGroup)
+                            .At(context.FromQq)
+                            .Text(" 老娘都说了还没更新完！花Q！花Q花Q！花～Q！")
+                            .Done();
+                        Thread.Sleep(10000);
+                    }
+                    NeedPorn(context);
+                }
             }
 
             // 不要忘记在MahuaModule中注册
